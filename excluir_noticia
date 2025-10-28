@@ -1,0 +1,92 @@
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Verifica se recebemos um ID via GET
+$id = $_GET['id'] ?? 0;
+$id = intval($id);
+
+if ($id <= 0) {
+    // ID inválido ou faltando
+    $mensagem = "ID inválido. Nenhuma notícia foi excluída.";
+} else {
+    // Conectar ao banco
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "portal_noticias";
+
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    if ($conn->connect_error) {
+        $mensagem = "Falha na conexão com o banco: " . $conn->connect_error;
+    } else {
+        // Monta DELETE
+        $sql = "DELETE FROM noticias WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+
+        if (!$stmt) {
+            $mensagem = "Erro ao preparar exclusão: " . $conn->error;
+        } else {
+            $stmt->bind_param("i", $id);
+            if ($stmt->execute()) {
+                // Se deu certo
+                if ($stmt->affected_rows > 0) {
+                    $mensagem = "Notícia excluída com sucesso.";
+                } else {
+                    $mensagem = "Nenhuma notícia encontrada com esse ID.";
+                }
+            } else {
+                $mensagem = "Erro ao excluir: " . $stmt->error;
+            }
+            $stmt->close();
+        }
+
+        $conn->close();
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Excluir notícia</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="content">
+        <a class="brand" href="index.php" style="text-decoration:none; color:inherit;">
+            <div class="brand-logo">IN</div>
+            <div class="brand-name">
+                <span>Infinity News</span>
+                <span class="sub">Atualização em tempo real</span>
+            </div>
+        </a>
+
+        <nav>
+            <a class="btn alt" href="index.php">Início</a>
+            <a class="btn alt" href="buscar.php">Pesquisar</a>
+        </nav>
+    </div>
+</header>
+
+<main class="page">
+    <section class="form-card" style="text-align:center;">
+        <h2><?php echo htmlspecialchars($mensagem); ?></h2>
+
+        <div class="actions-row" style="justify-content:center;">
+            <a class="btn-primary" href="index.php">Voltar para página inicial</a>
+            <a class="btn-outline" href="buscar.php">Ir para busca</a>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <p>Projeto acadêmico • Exclusão de notícia • PHP + MySQL</p>
+</footer>
+
+</body>
+</html>
